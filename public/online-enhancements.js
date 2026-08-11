@@ -1,4 +1,4 @@
-// KRAW production enhancements: secure email handoff + admin table/search/CSV.
+// KRAW production enhancements: secure SMS handoff + admin table/search/CSV.
 
 function krawRenderAdminTable(query = "") {
   const q = String(query || "").trim().toLocaleLowerCase("tr-TR");
@@ -106,24 +106,24 @@ if (bookingForm) {
       });
 
       const created = Array.isArray(result) ? result[0] : result;
-      if (!created?.booking_id || !created?.email_token) throw new Error("Rezervasyon oluşturuldu ancak e-posta doğrulama bilgisi alınamadı.");
+      if (!created?.booking_id || !created?.email_token) throw new Error("Rezervasyon oluşturuldu ancak SMS doğrulama bilgisi alınamadı.");
 
       localStorage.removeItem("kraw_hold_token");
       holdToken = "";
 
-      let emailSent = false;
+      let smsSent = false;
       try {
-        const { data, error } = await db.functions.invoke("send-booking-confirmation", {
+        const { data, error } = await db.functions.invoke("send-booking-sms", {
           body: { booking_id: created.booking_id, email_token: created.email_token }
         });
-        emailSent = !error && data?.sent === true;
-      } catch (mailError) {
-        console.warn("Confirmation email could not be sent", mailError);
+        smsSent = !error && data?.sent === true;
+      } catch (smsError) {
+        console.warn("Confirmation SMS could not be sent", smsError);
       }
 
       $("#formCard").classList.add("hidden");
       $("#successCard").classList.remove("hidden");
-      $("#successText").textContent = `${longDate(selectedDate)}, ${selectedTime}–${endTime(selectedTime)} için görüşmenizi ayırdık.${emailSent ? " Randevu bilgileriniz e-posta adresinize gönderildi." : " Rezervasyonunuz sisteme kaydedildi; e-posta servisi henüz yapılandırılmamış olabilir."}`;
+      $("#successText").textContent = `${longDate(selectedDate)}, ${selectedTime}–${endTime(selectedTime)} için görüşmenizi ayırdık.${smsSent ? " Randevu bilgileriniz telefonunuza SMS olarak gönderildi." : " Rezervasyonunuz sisteme kaydedildi; SMS servisi henüz yapılandırılmamış olabilir."}`;
       e.target.reset();
       await refreshSlots();
     } catch (err) {
