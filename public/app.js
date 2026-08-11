@@ -53,11 +53,9 @@ function renderDates(){
     </button>`).join("");
   document.querySelectorAll(".date-tab").forEach(b=>b.onclick=async()=>{
     if(selectedTime) await releaseHold();
-    selectedDate=b.dataset.date;
-    selectedTime=null;
+    selectedDate=b.dataset.date; selectedTime=null;
     $("#formCard").classList.add("hidden");
-    renderDates();
-    await refreshSlots();
+    renderDates(); await refreshSlots();
   });
 }
 
@@ -92,45 +90,37 @@ async function chooseSlot(time){
 async function releaseHold(){
   if(!selectedDate || !selectedTime || !holdToken) return;
   try{await rpc("kraw_release_slot",{p_day:selectedDate,p_time:selectedTime,p_hold_token:holdToken});}catch{}
-  selectedTime=null;
-  holdToken="";
-  localStorage.removeItem("kraw_hold_token");
+  selectedTime=null; holdToken=""; localStorage.removeItem("kraw_hold_token");
 }
 
-$("#cancelSelection").onclick=async()=>{
-  await releaseHold();
-  $("#formCard").classList.add("hidden");
-  await refreshSlots();
-};
+$("#cancelSelection").onclick=async()=>{await releaseHold();$("#formCard").classList.add("hidden");await refreshSlots();};
 
 $("#bookingForm").onsubmit=async e=>{
   e.preventDefault();
   if(!selectedTime || !holdToken) return alert("Lütfen önce bir saat seçin.");
   const btn=e.submitter, previous=btn.innerHTML;
-  btn.disabled=true;
-  btn.innerHTML='Kaydediliyor <span>…</span>';
+  btn.disabled=true; btn.innerHTML='Kaydediliyor <span>…</span>';
   const f=Object.fromEntries(new FormData(e.target).entries());
   try{
-    const bookingId = await rpc("kraw_create_booking",{
+    const created = await rpc("kraw_create_booking",{
       p_hold_token:holdToken,p_name:f.name,p_company:f.company,p_email:f.email,p_phone:f.phone,p_day:selectedDate,p_time:selectedTime
     });
-    localStorage.removeItem("kraw_hold_token");
-    holdToken="";
+    const createdRow = Array.isArray(created) ? created[0] : created;
+    localStorage.removeItem("kraw_hold_token"); holdToken="";
+
     let emailSent=false;
     try{
-      const {data,error}=await db.functions.invoke("send-booking-confirmation",{body:{booking_id:bookingId}});
+      const {data,error}=await db.functions.invoke("send-booking-confirmation",{
+        body:{booking_id:createdRow.booking_id,email_token:createdRow.email_token}
+      });
       emailSent=!error && data?.sent===true;
     }catch{}
-    $("#formCard").classList.add("hidden");
-    $("#successCard").classList.remove("hidden");
+
+    $("#formCard").classList.add("hidden"); $("#successCard").classList.remove("hidden");
     $("#successText").textContent=`${longDate(selectedDate)}, ${selectedTime}–${endTime(selectedTime)} için görüşmenizi ayırdık.${emailSent?" Randevu bilgileriniz e-posta adresinize gönderildi.":" Rezervasyonunuz sisteme kaydedildi."}`;
-    e.target.reset();
-    await refreshSlots();
+    e.target.reset(); await refreshSlots();
   }catch(err){
-    alert(friendlyError(err));
-    btn.disabled=false;
-    btn.innerHTML=previous;
-    await refreshSlots();
+    alert(friendlyError(err)); btn.disabled=false; btn.innerHTML=previous; await refreshSlots();
   }
 };
 
@@ -141,9 +131,7 @@ $("#closeEdit").onclick=()=>editDialog.close();
 
 async function checkAdmin(){
   let authenticated=false;
-  if(adminToken){
-    try{authenticated=await rpc("kraw_admin_session_valid",{p_session_token:adminToken});}catch{}
-  }
+  if(adminToken){try{authenticated=await rpc("kraw_admin_session_valid",{p_session_token:adminToken});}catch{}}
   if(!authenticated){adminToken="";sessionStorage.removeItem("kraw_admin_token");}
   $("#adminLogin").classList.toggle("hidden",authenticated);
   $("#adminPanel").classList.toggle("hidden",!authenticated);
@@ -151,8 +139,7 @@ async function checkAdmin(){
 }
 
 $("#loginForm").onsubmit=async e=>{
-  e.preventDefault();
-  $("#loginError").textContent="";
+  e.preventDefault(); $("#loginError").textContent="";
   const f=Object.fromEntries(new FormData(e.target).entries());
   try{
     const result=await rpc("kraw_admin_login",{p_username:f.username,p_password:f.password});
@@ -161,10 +148,7 @@ $("#loginForm").onsubmit=async e=>{
       $("#loginError").textContent=row?.error_code==="LOCKED"?"Çok fazla hatalı deneme. 15 dakika sonra tekrar deneyin.":"Kullanıcı adı veya şifre hatalı.";
       return;
     }
-    adminToken=row.session_token;
-    sessionStorage.setItem("kraw_admin_token",adminToken);
-    e.target.reset();
-    await checkAdmin();
+    adminToken=row.session_token; sessionStorage.setItem("kraw_admin_token",adminToken); e.target.reset(); await checkAdmin();
   }catch(err){$("#loginError").textContent=friendlyError(err);}
 };
 
@@ -178,20 +162,45 @@ async function loadAdmin(){
     const rows=await rpc("kraw_admin_list_bookings",{p_session_token:adminToken});
     adminBookings=(rows||[]).map(b=>({...b,date:b.day,time:b.slot_time}));
     $("#bookingCount").textContent=adminBookings.length;
-    $("#adminList").innerHTML=adminBookings.length?adminBookings.map(b=>`
-      <div class="admin-row">
-        <div><b>${fmtDate(b.date)}</b></div><div><b>${b.time}</b></div>
-        <div class="wide"><b>${esc(b.name)}</b><div class="muted">${esc(b.company)}</div></div>
-        <div class="wide">${esc(b.email||"—")}</div><div>${esc(b.phone||"—")}</div>
-        <div class="admin-actions"><button data-edit="${b.id}">Düzenle</button><button class="danger" data-del="${b.id}">Sil</button></div>
-      </div>`).join(""):`<p class="muted">Henüz randevu yok.</p>`;
-    document.querySelectorAll("[data-edit]").forEach(x=>x.onclick=()=>openEdit(adminBookings.find(b=>b.id===x.dataset.edit)));
-    document.querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>deleteBooking(x.dataset.del));
+    renderAdminRows();
   }catch(err){
     if(String(err.message).includes("Admin oturumunuz")){adminToken="";sessionStorage.removeItem("kraw_admin_token");await checkAdmin();}
     else alert(friendlyError(err));
   }
 }
+
+function renderAdminRows(){
+  const term = ($("#adminSearch")?.value || "").trim().toLocaleLowerCase("tr-TR");
+  const filtered = adminBookings.filter(b=>[b.name,b.company,b.email,b.phone,b.date,b.time].join(" ").toLocaleLowerCase("tr-TR").includes(term));
+  $("#adminEmpty").classList.toggle("hidden",filtered.length>0);
+  $("#adminList").innerHTML=filtered.map(b=>`
+    <tr>
+      <td><b>${fmtDate(b.date)}</b></td>
+      <td><b>${esc(b.time)}</b></td>
+      <td>${esc(b.name)}</td>
+      <td>${esc(b.company)}</td>
+      <td><a href="mailto:${esc(b.email)}">${esc(b.email)}</a></td>
+      <td><a href="tel:${esc(b.phone)}">${esc(b.phone)}</a></td>
+      <td><div class="admin-actions"><button data-edit="${b.id}">Düzenle</button><button class="danger" data-del="${b.id}">Sil</button></div></td>
+    </tr>`).join("");
+  document.querySelectorAll("[data-edit]").forEach(x=>x.onclick=()=>openEdit(adminBookings.find(b=>b.id===x.dataset.edit)));
+  document.querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>deleteBooking(x.dataset.del));
+}
+
+$("#adminSearch").addEventListener("input",renderAdminRows);
+
+function csvCell(v){return `"${String(v??"").replace(/"/g,'""')}"`;}
+$("#exportCsv").onclick=()=>{
+  if(!adminBookings.length) return alert("Dışa aktarılacak kayıt yok.");
+  const headers=["Tarih","Saat","Ad Soyad","Firma","E-posta","Telefon","Kayıt Tarihi"];
+  const rows=adminBookings.map(b=>[b.date,b.time,b.name,b.company,b.email,b.phone,b.created_at]);
+  const csv="\uFEFF"+[headers,...rows].map(r=>r.map(csvCell).join(";")).join("\r\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=`KRAW_Automechanika_Randevular_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+};
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
 function prepSelects(){
@@ -200,22 +209,17 @@ function prepSelects(){
   f.time.innerHTML=config.times.map(t=>`<option value="${t}">${t}</option>`).join("");
 }
 function openEdit(b=null){
-  prepSelects();
-  const f=$("#editForm");f.reset();f.id.value=b?.id||"";
+  prepSelects();const f=$("#editForm");f.reset();f.id.value=b?.id||"";
   $("#editTitle").textContent=b?"Randevuyu Düzenle":"Randevu Ekle";
   if(b) for(const k of ["date","time","name","company","email","phone"]) f[k].value=b[k]||"";
   editDialog.showModal();
 }
 $("#addBooking").onclick=()=>openEdit();
 $("#editForm").onsubmit=async e=>{
-  e.preventDefault();
-  const data=Object.fromEntries(new FormData(e.target).entries()), id=data.id;
+  e.preventDefault(); const data=Object.fromEntries(new FormData(e.target).entries()), id=data.id;
   try{
-    if(id){
-      await rpc("kraw_admin_update_booking",{p_session_token:adminToken,p_id:id,p_name:data.name,p_company:data.company,p_email:data.email,p_phone:data.phone,p_day:data.date,p_time:data.time});
-    }else{
-      await rpc("kraw_admin_create_booking",{p_session_token:adminToken,p_name:data.name,p_company:data.company,p_email:data.email,p_phone:data.phone,p_day:data.date,p_time:data.time});
-    }
+    if(id) await rpc("kraw_admin_update_booking",{p_session_token:adminToken,p_id:id,p_name:data.name,p_company:data.company,p_email:data.email,p_phone:data.phone,p_day:data.date,p_time:data.time});
+    else await rpc("kraw_admin_create_booking",{p_session_token:adminToken,p_name:data.name,p_company:data.company,p_email:data.email,p_phone:data.phone,p_day:data.date,p_time:data.time});
     editDialog.close();await loadAdmin();await refreshSlots();
   }catch(err){alert(friendlyError(err));}
 };
@@ -225,15 +229,8 @@ async function deleteBooking(id){
 }
 
 function subscribeRealtime(){
-  db.channel("kraw-slot-events")
-    .on("postgres_changes",{event:"*",schema:"public",table:"slot_events"},()=>refreshSlots())
-    .subscribe();
+  db.channel("kraw-slot-events").on("postgres_changes",{event:"*",schema:"public",table:"slot_events"},()=>refreshSlots()).subscribe();
 }
 
-async function init(){
-  renderDates();
-  await refreshSlots();
-  subscribeRealtime();
-  setInterval(refreshSlots,30000);
-}
+async function init(){renderDates();await refreshSlots();subscribeRealtime();setInterval(refreshSlots,30000);}
 init().catch(e=>{document.body.innerHTML=`<pre style="padding:30px">${esc(friendlyError(e))}</pre>`;});
