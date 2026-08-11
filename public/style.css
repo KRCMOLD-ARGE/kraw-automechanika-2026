@@ -36,10 +36,10 @@ main{max-width:1180px;margin:auto;padding:24px 24px 80px}
 .date-tab b{color:var(--text);font-size:18px;margin-top:4px}
 .date-tab.active{border-color:var(--accent);background:linear-gradient(180deg,#eef9ff,#e2f5ff);box-shadow:0 8px 20px rgba(21,159,227,.09)}
 .slots{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
-.slot{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:12px;padding:13px 8px;transition:.18s}
-.slot:hover:not(:disabled){border-color:var(--accent);background:#eff9fe;transform:translateY(-1px)}
-.slot:disabled{color:#9fb0ba;background:#f1f5f7;text-decoration:line-through;cursor:not-allowed;border-color:#e3edf2}
-.slot.mine{border-color:var(--accent);background:#e8f7ff;color:#087db9;font-weight:700}
+.slot{border:1px solid #9adbb8;background:#eefaf3;color:#17633a;border-radius:12px;padding:13px 8px;transition:.18s;font-weight:600}
+.slot:hover:not(:disabled){border-color:#36ad70;background:#ddf6e8;transform:translateY(-1px);box-shadow:0 6px 16px rgba(43,182,115,.12)}
+.slot:disabled{color:#9fb0ba;background:#f1f5f7;text-decoration:line-through;cursor:not-allowed;border-color:#e3edf2;font-weight:400}
+.slot.mine{border-color:var(--accent);background:#e8f7ff;color:#087db9;font-weight:700;box-shadow:0 0 0 2px rgba(21,159,227,.08)}
 .slot-note{font-size:12px;color:var(--muted);margin:15px 0 0}
 .hidden{display:none!important}
 .selected-summary{margin:22px 0;padding:16px 18px;border:1px solid #bde4f7;background:#eef9ff;border-radius:14px;color:#0d638c;font-weight:600}
