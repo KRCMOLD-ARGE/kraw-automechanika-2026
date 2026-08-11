@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -8,114 +8,92 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="./style.css?v=20260811-1722">
 </head>
 <body>
   <div class="ambient a1"></div><div class="ambient a2"></div>
-
   <header class="topbar">
-    <a class="brand" href="#" aria-label="KRAW">
-      <img src="/kraw-logo.png" alt="KRAW logo" class="brand-logo">
-    </a>
-    <button id="adminBtn" class="ghost-btn">Admin Paneli</button>
+    <a class="brand" href="#" aria-label="KRAW"><img src="./kraw-logo.png" alt="KRAW logo" class="brand-logo"></a>
+    <button id="adminBtn" class="ghost-btn">Admin Panel</button>
   </header>
-
   <main>
-    <section class="hero hero-banner">
-      <img src="/automechanika-banner.png" alt="Automechanika Frankfurt 8-12 September 2026" class="hero-image">
-    </section>
-
+    <section class="hero hero-banner"><img src="./automechanika-banner.png" alt="Automechanika Frankfurt 8-12 September 2026" class="hero-image"></section>
     <section class="booking-card">
       <div class="section-head">
-        <div>
-          <div class="step-label">01 / TARİH</div>
-          <h2>Görüşme zamanınızı seçin</h2>
-        </div>
-        <div class="legend">
-          <span><i class="dot available"></i>Uygun</span>
-          <span><i class="dot busy"></i>Dolu</span>
-        </div>
+        <div><div class="step-label">01 / DATE</div><h2>Select your meeting time</h2></div>
+        <div class="legend"><span><i class="dot available"></i>Available</span><span><i class="dot busy"></i>Booked</span></div>
       </div>
       <div id="dateTabs" class="date-tabs"></div>
       <div id="slots" class="slots"></div>
-      <p class="slot-note">Seçtiğiniz saat, formu tamamlamanız için 5 dakika boyunca sizin adınıza tutulur.</p>
+      <p class="slot-note">Your selected time will be held for 5 minutes while you complete the form.</p>
     </section>
-
     <section id="formCard" class="booking-card hidden">
       <div class="section-head">
-        <div>
-          <div class="step-label">02 / BİLGİLER</div>
-          <h2>Rezervasyonu tamamlayın</h2>
-        </div>
-        <button id="cancelSelection" class="text-btn">Saati değiştir</button>
+        <div><div class="step-label">02 / DETAILS</div><h2>Complete your reservation</h2></div>
+        <button id="cancelSelection" class="text-btn">Change time</button>
       </div>
       <div id="selectedSummary" class="selected-summary"></div>
       <form id="bookingForm" class="form-grid">
-        <label>Ad Soyad*<input name="name" required placeholder="Adınız ve soyadınız"></label>
-        <label>E-posta*<input name="email" type="email" required placeholder="ornek@firma.com"></label>
-        <label>Telefon*<input name="phone" required placeholder="+90 ..."></label>
-        <label>Firma*<input name="company" required placeholder="Firma adı"></label>
-        <button class="primary-btn full" type="submit">Randevuyu Onayla <span>→</span></button>
+        <label>Full Name*<input name="name" required placeholder="Your full name"></label>
+        <label>Email*<input name="email" type="email" required placeholder="name@company.com"></label>
+        <label>Phone*<input name="phone" required placeholder="+49 ..."></label>
+        <label>Company*<input name="company" required placeholder="Company name"></label>
+        <button class="primary-btn full" type="submit">Confirm Appointment <span>→</span></button>
       </form>
-      <p class="slot-note">Onay sonrasında randevu bilgileri girdiğiniz e-posta adresine gönderilir.</p>
+      <p class="slot-note">Your appointment will be securely saved in our reservation system.</p>
     </section>
-
     <section id="successCard" class="booking-card success hidden">
       <div class="success-icon">✓</div>
-      <h2>Randevunuz oluşturuldu.</h2>
+      <h2>Your appointment has been confirmed.</h2>
       <p id="successText"></p>
-      <button class="ghost-btn" onclick="location.reload()">Yeni randevu</button>
+      <button class="ghost-btn" onclick="location.reload()">Book another appointment</button>
     </section>
   </main>
-
   <footer>
-    <div class="footer-brand">
-      <img src="/kraw-logo.png" alt="KRAW logo" class="footer-logo">
-      <span>Karaca Otomotiv Güvenlik</span>
-    </div>
+    <div class="footer-brand"><img src="./kraw-logo.png" alt="KRAW logo" class="footer-logo"><span>Karaca Automotive Safety</span></div>
     <span>Automechanika Frankfurt 2026</span>
   </footer>
-
   <dialog id="adminDialog">
-    <div class="dialog-head">
-      <div><div class="step-label">KRAW</div><h2>Admin Paneli</h2></div>
-      <button class="icon-btn" id="closeAdmin">×</button>
-    </div>
+    <div class="dialog-head"><div><div class="step-label">KRAW</div><h2>Admin Panel</h2></div><button class="icon-btn" id="closeAdmin">×</button></div>
     <div id="adminLogin">
       <form id="loginForm" class="form-grid single">
-        <label>Kullanıcı adı<input name="username" autocomplete="username" required></label>
-        <label>Şifre<input name="password" type="password" autocomplete="current-password" required></label>
-        <button class="primary-btn" type="submit">Giriş Yap</button>
+        <label>Username<input name="username" autocomplete="username" required></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+        <button class="primary-btn" type="submit">Sign In</button>
       </form>
       <p id="loginError" class="error"></p>
     </div>
     <div id="adminPanel" class="hidden">
       <div class="admin-toolbar">
-        <div><b id="bookingCount">0</b> kayıt</div>
-        <button id="addBooking" class="primary-small">+ Randevu Ekle</button>
-        <button id="logoutBtn" class="text-btn">Çıkış</button>
+        <div class="admin-count"><b id="bookingCount">0</b> appointments</div>
+        <input id="adminSearch" class="admin-search" type="search" placeholder="Search name, company, email or phone…" aria-label="Search appointments">
+        <button id="exportCsv" class="ghost-btn admin-export">Export CSV / Excel</button>
+        <button id="addBooking" class="primary-small">+ Add Appointment</button>
+        <button id="logoutBtn" class="text-btn">Sign Out</button>
       </div>
-      <div id="adminList" class="admin-list"></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Date</th><th>Time</th><th>Full Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Actions</th></tr></thead>
+          <tbody id="adminList"></tbody>
+        </table>
+        <p id="adminEmpty" class="admin-empty hidden">No appointments yet.</p>
+      </div>
     </div>
   </dialog>
-
   <dialog id="editDialog">
-    <div class="dialog-head">
-      <div><div class="step-label">ADMIN</div><h2 id="editTitle">Randevu</h2></div>
-      <button class="icon-btn" id="closeEdit">×</button>
-    </div>
+    <div class="dialog-head"><div><div class="step-label">ADMIN</div><h2 id="editTitle">Appointment</h2></div><button class="icon-btn" id="closeEdit">×</button></div>
     <form id="editForm" class="form-grid">
       <input type="hidden" name="id">
-      <label>Tarih<select name="date"></select></label>
-      <label>Saat<select name="time"></select></label>
-      <label>Ad Soyad<input name="name" required></label>
-      <label>E-posta<input name="email" type="email" required></label>
-      <label>Telefon<input name="phone" required></label>
-      <label>Firma<input name="company" required></label>
-      <button class="primary-btn full" type="submit">Kaydet</button>
+      <label>Date<select name="date"></select></label>
+      <label>Time<select name="time"></select></label>
+      <label>Full Name<input name="name" required></label>
+      <label>Email<input name="email" type="email" required></label>
+      <label>Phone<input name="phone" required></label>
+      <label>Company<input name="company" required></label>
+      <button class="primary-btn full" type="submit">Save</button>
     </form>
   </dialog>
-
-  <script src="/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js?v=20260811-1722"></script>
 </body>
 </html>
