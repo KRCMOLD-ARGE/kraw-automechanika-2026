@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f6fbff">
+  <title>KRAW | Automechanika Frankfurt 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="ambient a1"></div><div class="ambient a2"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="KRAW">
+      <img src="/kraw-logo.png" alt="KRAW logo" class="brand-logo">
+    </a>
+    <button id="adminBtn" class="ghost-btn">Admin Paneli</button>
+  </header>
+
+  <main>
+    <section class="hero hero-banner">
+      <img src="/automechanika-banner.png" alt="Automechanika Frankfurt 8-12 September 2026" class="hero-image">
+    </section>
+
+    <section class="booking-card">
+      <div class="section-head">
+        <div>
+          <div class="step-label">01 / TARİH</div>
+          <h2>Görüşme zamanınızı seçin</h2>
+        </div>
+        <div class="legend">
+          <span><i class="dot available"></i>Uygun</span>
+          <span><i class="dot busy"></i>Dolu</span>
+        </div>
+      </div>
+      <div id="dateTabs" class="date-tabs"></div>
+      <div id="slots" class="slots"></div>
+      <p class="slot-note">Seçtiğiniz saat, formu tamamlamanız için 5 dakika boyunca sizin adınıza tutulur.</p>
+    </section>
+
+    <section id="formCard" class="booking-card hidden">
+      <div class="section-head">
+        <div>
+          <div class="step-label">02 / BİLGİLER</div>
+          <h2>Rezervasyonu tamamlayın</h2>
+        </div>
+        <button id="cancelSelection" class="text-btn">Saati değiştir</button>
+      </div>
+      <div id="selectedSummary" class="selected-summary"></div>
+      <form id="bookingForm" class="form-grid">
+        <label>Ad Soyad*<input name="name" required placeholder="Adınız ve soyadınız"></label>
+        <label>E-posta*<input name="email" type="email" required placeholder="ornek@firma.com"></label>
+        <label>Telefon*<input name="phone" required placeholder="+90 ..."></label>
+        <label>Firma*<input name="company" required placeholder="Firma adı"></label>
+        <button class="primary-btn full" type="submit">Randevuyu Onayla <span>→</span></button>
+      </form>
+      <p class="slot-note">Onay sonrasında randevu bilgileri girdiğiniz e-posta adresine gönderilir.</p>
+    </section>
+
+    <section id="successCard" class="booking-card success hidden">
+      <div class="success-icon">✓</div>
+      <h2>Randevunuz oluşturuldu.</h2>
+      <p id="successText"></p>
+      <button class="ghost-btn" onclick="location.reload()">Yeni randevu</button>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-brand">
+      <img src="/kraw-logo.png" alt="KRAW logo" class="footer-logo">
+      <span>Karaca Otomotiv Güvenlik</span>
+    </div>
+    <span>Automechanika Frankfurt 2026</span>
+  </footer>
+
+  <dialog id="adminDialog">
+    <div class="dialog-head">
+      <div><div class="step-label">KRAW</div><h2>Admin Paneli</h2></div>
+      <button class="icon-btn" id="closeAdmin">×</button>
+    </div>
+    <div id="adminLogin">
+      <form id="loginForm" class="form-grid single">
+        <label>Kullanıcı adı<input name="username" autocomplete="username" required></label>
+        <label>Şifre<input name="password" type="password" autocomplete="current-password" required></label>
+        <button class="primary-btn" type="submit">Giriş Yap</button>
+      </form>
+      <p id="loginError" class="error"></p>
+    </div>
+    <div id="adminPanel" class="hidden">
+      <div class="admin-toolbar">
+        <div><b id="bookingCount">0</b> kayıt</div>
+        <button id="addBooking" class="primary-small">+ Randevu Ekle</button>
+        <button id="logoutBtn" class="text-btn">Çıkış</button>
+      </div>
+      <div id="adminList" class="admin-list"></div>
+    </div>
+  </dialog>
+
+  <dialog id="editDialog">
+    <div class="dialog-head">
+      <div><div class="step-label">ADMIN</div><h2 id="editTitle">Randevu</h2></div>
+      <button class="icon-btn" id="closeEdit">×</button>
+    </div>
+    <form id="editForm" class="form-grid">
+      <input type="hidden" name="id">
+      <label>Tarih<select name="date"></select></label>
+      <label>Saat<select name="time"></select></label>
+      <label>Ad Soyad<input name="name" required></label>
+      <label>E-posta<input name="email" type="email" required></label>
+      <label>Telefon<input name="phone" required></label>
+      <label>Firma<input name="company" required></label>
+      <button class="primary-btn full" type="submit">Kaydet</button>
+    </form>
+  </dialog>
+
+  <script src="/app.js"></script>
+</body>
+</html>
