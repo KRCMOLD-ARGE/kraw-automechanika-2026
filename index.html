@@ -38,11 +38,35 @@
     <section id="successCard" class="booking-card success hidden"><div class="success-icon">✓</div><h2>Randevunuz oluşturuldu.</h2><p id="successText"></p><button class="ghost-btn" onclick="location.reload()">Yeni randevu</button></section>
   </main>
   <footer><div class="footer-brand"><img src="./public/kraw-logo.png" alt="KRAW logo" class="footer-logo"><span>Karaca Otomotiv Güvenlik</span></div><span>Automechanika Frankfurt 2026</span></footer>
+
   <dialog id="adminDialog">
     <div class="dialog-head"><div><div class="step-label">KRAW</div><h2>Admin Paneli</h2></div><button class="icon-btn" id="closeAdmin">×</button></div>
-    <div id="adminLogin"><form id="loginForm" class="form-grid single"><label>Kullanıcı adı<input name="username" autocomplete="username" required></label><label>Şifre<input name="password" type="password" autocomplete="current-password" required></label><button class="primary-btn" type="submit">Giriş Yap</button></form><p id="loginError" class="error"></p></div>
-    <div id="adminPanel" class="hidden"><div class="admin-toolbar"><div><b id="bookingCount">0</b> kayıt</div><button id="addBooking" class="primary-small">+ Randevu Ekle</button><button id="logoutBtn" class="text-btn">Çıkış</button></div><div id="adminList" class="admin-list"></div></div>
+    <div id="adminLogin">
+      <form id="loginForm" class="form-grid single">
+        <label>Kullanıcı adı<input name="username" autocomplete="username" required></label>
+        <label>Şifre<input name="password" type="password" autocomplete="current-password" required></label>
+        <button class="primary-btn" type="submit">Giriş Yap</button>
+      </form>
+      <p id="loginError" class="error"></p>
+    </div>
+    <div id="adminPanel" class="hidden">
+      <div class="admin-toolbar">
+        <div class="admin-count"><b id="bookingCount">0</b> kayıt</div>
+        <input id="adminSearch" class="admin-search" type="search" placeholder="Ad, firma, e-posta, telefon ara…" aria-label="Randevularda ara">
+        <button id="exportCsv" class="ghost-btn admin-export">CSV / Excel</button>
+        <button id="addBooking" class="primary-small">+ Randevu Ekle</button>
+        <button id="logoutBtn" class="text-btn">Çıkış</button>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Tarih</th><th>Saat</th><th>Ad Soyad</th><th>Firma</th><th>E-posta</th><th>Telefon</th><th>İşlem</th></tr></thead>
+          <tbody id="adminList"></tbody>
+        </table>
+        <p id="adminEmpty" class="admin-empty hidden">Henüz randevu yok.</p>
+      </div>
+    </div>
   </dialog>
+
   <dialog id="editDialog">
     <div class="dialog-head"><div><div class="step-label">ADMIN</div><h2 id="editTitle">Randevu</h2></div><button class="icon-btn" id="closeEdit">×</button></div>
     <form id="editForm" class="form-grid"><input type="hidden" name="id"><label>Tarih<select name="date"></select></label><label>Saat<select name="time"></select></label><label>Ad Soyad<input name="name" required></label><label>E-posta<input name="email" type="email" required></label><label>Telefon<input name="phone" required></label><label>Firma<input name="company" required></label><button class="primary-btn full" type="submit">Kaydet</button></form>
