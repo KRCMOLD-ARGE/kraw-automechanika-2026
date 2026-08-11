@@ -14,21 +14,21 @@ let adminToken = sessionStorage.getItem("kraw_admin_token") || "";
 let adminBookings = [];
 const $ = s => document.querySelector(s);
 
-const fmtDate = d => new Intl.DateTimeFormat("tr-TR",{weekday:"short",day:"numeric",month:"short"}).format(new Date(d+"T12:00:00"));
-const longDate = d => new Intl.DateTimeFormat("tr-TR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(new Date(d+"T12:00:00"));
+const fmtDate = d => new Intl.DateTimeFormat("en-GB",{weekday:"short",day:"numeric",month:"short"}).format(new Date(d+"T12:00:00"));
+const longDate = d => new Intl.DateTimeFormat("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(new Date(d+"T12:00:00"));
 
 function friendlyError(error){
-  const raw = String(error?.message || error || "İşlem başarısız.");
+  const raw = String(error?.message || error || "The operation could not be completed.");
   const map = {
-    SLOT_BOOKED:"Bu saat dolu. Lütfen başka bir saat seçin.",
-    SLOT_HELD:"Bu saat şu anda başka bir ziyaretçi tarafından seçildi.",
-    HOLD_EXPIRED:"Saat seçiminizin 5 dakikalık süresi doldu. Lütfen yeniden seçin.",
-    INVALID_SLOT:"Geçersiz randevu saati.",
-    INVALID_NAME:"Lütfen geçerli bir ad soyad girin.",
-    INVALID_COMPANY:"Lütfen firma adını girin.",
-    INVALID_EMAIL:"Lütfen geçerli bir e-posta adresi girin.",
-    INVALID_PHONE:"Lütfen geçerli bir telefon numarası girin.",
-    UNAUTHORIZED:"Admin oturumunuz sona erdi. Lütfen tekrar giriş yapın."
+    SLOT_BOOKED:"This time slot is already booked. Please select another time.",
+    SLOT_HELD:"This time slot is currently being held by another visitor.",
+    HOLD_EXPIRED:"Your 5-minute hold has expired. Please select the time again.",
+    INVALID_SLOT:"Invalid appointment time.",
+    INVALID_NAME:"Please enter a valid full name.",
+    INVALID_COMPANY:"Please enter your company name.",
+    INVALID_EMAIL:"Please enter a valid email address.",
+    INVALID_PHONE:"Please enter a valid phone number.",
+    UNAUTHORIZED:"Your admin session has expired. Please sign in again."
   };
   for(const [key,value] of Object.entries(map)) if(raw.includes(key)) return value;
   return raw;
@@ -46,10 +46,11 @@ function endTime(t){
 }
 
 function renderDates(){
+  const dayNames=["Tuesday","Wednesday","Thursday","Friday","Saturday"];
   $("#dateTabs").innerHTML = config.dates.map((d,i)=>`
     <button class="date-tab ${d===selectedDate?"active":""}" data-date="${d}">
-      <span>${["Salı","Çarşamba","Perşembe","Cuma","Cumartesi"][i]}</span>
-      <b>${new Date(d+"T12:00:00").getDate()} Eylül</b>
+      <span>${dayNames[i]}</span>
+      <b>${new Date(d+"T12:00:00").getDate()} September</b>
     </button>`).join("");
   document.querySelectorAll(".date-tab").forEach(b=>b.onclick=async()=>{
     if(selectedTime) await releaseHold();
@@ -80,7 +81,7 @@ async function chooseSlot(time){
     holdToken = hold.hold_token;
     localStorage.setItem("kraw_hold_token",holdToken);
     selectedTime=time;
-    $("#selectedSummary").textContent=`${longDate(selectedDate)} · ${time}–${endTime(time)}`;
+    $("#selectedSummary").textContent=`${longDate(selectedDate)} · ${time}–${endTime(time)} (Frankfurt local time)`;
     $("#formCard").classList.remove("hidden");
     $("#formCard").scrollIntoView({behavior:"smooth",block:"start"});
     await refreshSlots();
@@ -97,27 +98,19 @@ $("#cancelSelection").onclick=async()=>{await releaseHold();$("#formCard").class
 
 $("#bookingForm").onsubmit=async e=>{
   e.preventDefault();
-  if(!selectedTime || !holdToken) return alert("Lütfen önce bir saat seçin.");
+  if(!selectedTime || !holdToken) return alert("Please select a time first.");
   const btn=e.submitter, previous=btn.innerHTML;
-  btn.disabled=true; btn.innerHTML='Kaydediliyor <span>…</span>';
+  btn.disabled=true; btn.innerHTML='Saving <span>…</span>';
   const f=Object.fromEntries(new FormData(e.target).entries());
   try{
     const created = await rpc("kraw_create_booking",{
       p_hold_token:holdToken,p_name:f.name,p_company:f.company,p_email:f.email,p_phone:f.phone,p_day:selectedDate,p_time:selectedTime
     });
     const createdRow = Array.isArray(created) ? created[0] : created;
+    if(!createdRow?.booking_id) throw new Error("The appointment could not be created.");
     localStorage.removeItem("kraw_hold_token"); holdToken="";
-
-    let emailSent=false;
-    try{
-      const {data,error}=await db.functions.invoke("send-booking-confirmation",{
-        body:{booking_id:createdRow.booking_id,email_token:createdRow.email_token}
-      });
-      emailSent=!error && data?.sent===true;
-    }catch{}
-
     $("#formCard").classList.add("hidden"); $("#successCard").classList.remove("hidden");
-    $("#successText").textContent=`${longDate(selectedDate)}, ${selectedTime}–${endTime(selectedTime)} için görüşmenizi ayırdık.${emailSent?" Randevu bilgileriniz e-posta adresinize gönderildi.":" Rezervasyonunuz sisteme kaydedildi."}`;
+    $("#successText").textContent=`Your meeting is reserved for ${longDate(selectedDate)}, ${selectedTime}–${endTime(selectedTime)} (Frankfurt local time). Your appointment has been saved successfully.`;
     e.target.reset(); await refreshSlots();
   }catch(err){
     alert(friendlyError(err)); btn.disabled=false; btn.innerHTML=previous; await refreshSlots();
@@ -145,7 +138,7 @@ $("#loginForm").onsubmit=async e=>{
     const result=await rpc("kraw_admin_login",{p_username:f.username,p_password:f.password});
     const row=Array.isArray(result)?result[0]:result;
     if(!row?.session_token){
-      $("#loginError").textContent=row?.error_code==="LOCKED"?"Çok fazla hatalı deneme. 15 dakika sonra tekrar deneyin.":"Kullanıcı adı veya şifre hatalı.";
+      $("#loginError").textContent=row?.error_code==="LOCKED"?"Too many failed attempts. Please try again in 15 minutes.":"Incorrect username or password.";
       return;
     }
     adminToken=row.session_token; sessionStorage.setItem("kraw_admin_token",adminToken); e.target.reset(); await checkAdmin();
@@ -164,14 +157,14 @@ async function loadAdmin(){
     $("#bookingCount").textContent=adminBookings.length;
     renderAdminRows();
   }catch(err){
-    if(String(err.message).includes("Admin oturumunuz")){adminToken="";sessionStorage.removeItem("kraw_admin_token");await checkAdmin();}
+    if(String(err.message).includes("admin session")){adminToken="";sessionStorage.removeItem("kraw_admin_token");await checkAdmin();}
     else alert(friendlyError(err));
   }
 }
 
 function renderAdminRows(){
-  const term = ($("#adminSearch")?.value || "").trim().toLocaleLowerCase("tr-TR");
-  const filtered = adminBookings.filter(b=>[b.name,b.company,b.email,b.phone,b.date,b.time].join(" ").toLocaleLowerCase("tr-TR").includes(term));
+  const term = ($("#adminSearch")?.value || "").trim().toLocaleLowerCase("en-GB");
+  const filtered = adminBookings.filter(b=>[b.name,b.company,b.email,b.phone,b.date,b.time].join(" ").toLocaleLowerCase("en-GB").includes(term));
   $("#adminEmpty").classList.toggle("hidden",filtered.length>0);
   $("#adminList").innerHTML=filtered.map(b=>`
     <tr>
@@ -181,7 +174,7 @@ function renderAdminRows(){
       <td>${esc(b.company)}</td>
       <td><a href="mailto:${esc(b.email)}">${esc(b.email)}</a></td>
       <td><a href="tel:${esc(b.phone)}">${esc(b.phone)}</a></td>
-      <td><div class="admin-actions"><button data-edit="${b.id}">Düzenle</button><button class="danger" data-del="${b.id}">Sil</button></div></td>
+      <td><div class="admin-actions"><button data-edit="${b.id}">Edit</button><button class="danger" data-del="${b.id}">Delete</button></div></td>
     </tr>`).join("");
   document.querySelectorAll("[data-edit]").forEach(x=>x.onclick=()=>openEdit(adminBookings.find(b=>b.id===x.dataset.edit)));
   document.querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>deleteBooking(x.dataset.del));
@@ -191,14 +184,14 @@ $("#adminSearch").addEventListener("input",renderAdminRows);
 
 function csvCell(v){return `"${String(v??"").replace(/"/g,'""')}"`;}
 $("#exportCsv").onclick=()=>{
-  if(!adminBookings.length) return alert("Dışa aktarılacak kayıt yok.");
-  const headers=["Tarih","Saat","Ad Soyad","Firma","E-posta","Telefon","Kayıt Tarihi"];
+  if(!adminBookings.length) return alert("There are no appointments to export.");
+  const headers=["Date","Time","Full Name","Company","Email","Phone","Created At"];
   const rows=adminBookings.map(b=>[b.date,b.time,b.name,b.company,b.email,b.phone,b.created_at]);
   const csv="\uFEFF"+[headers,...rows].map(r=>r.map(csvCell).join(";")).join("\r\n");
   const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
-  a.href=url;a.download=`KRAW_Automechanika_Randevular_${new Date().toISOString().slice(0,10)}.csv`;
+  a.href=url;a.download=`KRAW_Automechanika_Appointments_${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 };
 
@@ -210,7 +203,7 @@ function prepSelects(){
 }
 function openEdit(b=null){
   prepSelects();const f=$("#editForm");f.reset();f.id.value=b?.id||"";
-  $("#editTitle").textContent=b?"Randevuyu Düzenle":"Randevu Ekle";
+  $("#editTitle").textContent=b?"Edit Appointment":"Add Appointment";
   if(b) for(const k of ["date","time","name","company","email","phone"]) f[k].value=b[k]||"";
   editDialog.showModal();
 }
@@ -224,7 +217,7 @@ $("#editForm").onsubmit=async e=>{
   }catch(err){alert(friendlyError(err));}
 };
 async function deleteBooking(id){
-  if(!confirm("Bu randevuyu silmek istediğinize emin misiniz?")) return;
+  if(!confirm("Are you sure you want to delete this appointment?")) return;
   try{await rpc("kraw_admin_delete_booking",{p_session_token:adminToken,p_id:id});await loadAdmin();await refreshSlots();}catch(err){alert(friendlyError(err));}
 }
 
