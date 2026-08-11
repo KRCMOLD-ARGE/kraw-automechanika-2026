@@ -29,13 +29,13 @@ main{max-width:1180px;margin:auto;padding:24px 24px 80px}
 .available{background:var(--ok)}
 .busy{background:#a8bfcc}
 .step-label{font-size:12px;font-weight:700;letter-spacing:.13em;color:var(--accent);text-transform:uppercase}
-.date-tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:28px 0 18px}
+.date-tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:28px 0 0}
 .date-tab{background:#f8fcff;color:var(--muted);border:1px solid var(--line);border-radius:15px;padding:15px 10px;text-align:left;transition:.18s}
 .date-tab:hover{border-color:#9bd7f2;background:#f2faff}
 .date-tab b,.date-tab span{display:block}
 .date-tab b{color:var(--text);font-size:18px;margin-top:4px}
 .date-tab.active{border-color:var(--accent);background:linear-gradient(180deg,#eef9ff,#e2f5ff);box-shadow:0 8px 20px rgba(21,159,227,.09)}
-.slots{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.slots{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:20px;padding-top:20px;border-top:1px solid #d7eaf5}
 .slot{border:1px solid #9adbb8;background:#eefaf3;color:#17633a;border-radius:12px;padding:13px 8px;transition:.18s;font-weight:600}
 .slot:hover:not(:disabled){border-color:#36ad70;background:#ddf6e8;transform:translateY(-1px);box-shadow:0 6px 16px rgba(43,182,115,.12)}
 .slot:disabled{color:#9fb0ba;background:#f1f5f7;text-decoration:line-through;cursor:not-allowed;border-color:#e3edf2;font-weight:400}
@@ -98,7 +98,7 @@ dialog::backdrop{background:rgba(20,70,94,.28);backdrop-filter:blur(5px)}
   .booking-card{padding:20px;border-radius:18px}
   .section-head{display:block}
   .legend{margin-top:12px}
-  .slots{grid-template-columns:repeat(3,1fr)}
+  .slots{grid-template-columns:repeat(3,1fr);margin-top:16px;padding-top:16px}
   .form-grid{grid-template-columns:1fr}
   .full{grid-column:auto}
   footer{display:block}
