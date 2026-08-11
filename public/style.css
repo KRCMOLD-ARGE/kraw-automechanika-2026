@@ -58,30 +58,38 @@ main{max-width:1180px;margin:auto;padding:24px 24px 80px}
 footer{max-width:1180px;margin:auto;padding:30px 24px 50px;border-top:1px solid #dbeef8;display:flex;justify-content:space-between;align-items:center;color:#7991a1;font-size:12px}
 .footer-brand{display:flex;align-items:center;gap:12px}
 .footer-logo{display:block;height:28px;width:auto;object-fit:contain}
-dialog{width:min(940px,calc(100% - 24px));max-height:88vh;overflow:auto;border:1px solid var(--line);border-radius:22px;background:#fff;color:var(--text);padding:25px;box-shadow:0 30px 100px rgba(22,91,124,.22)}
+dialog{width:min(1120px,calc(100% - 24px));max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:22px;background:#fff;color:var(--text);padding:25px;box-shadow:0 30px 100px rgba(22,91,124,.22)}
 dialog::backdrop{background:rgba(20,70,94,.28);backdrop-filter:blur(5px)}
 .dialog-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
 .dialog-head h2{margin:6px 0 0}
 .icon-btn{background:#eef8fd;border-radius:10px;width:38px;height:38px;font-size:24px;color:#2e6d8e}
 .error{color:#d64a4a;font-size:13px}
-.admin-toolbar{display:flex;align-items:center;gap:14px;padding-bottom:16px;border-bottom:1px solid var(--line)}
-.admin-toolbar div{margin-right:auto;color:var(--muted)}
-.admin-toolbar b{color:var(--text)}
-.primary-small{background:var(--accent);border-radius:10px;padding:9px 12px;font-weight:700;color:#fff}
-.admin-list{display:grid;gap:8px;margin-top:14px}
-.admin-row{display:grid;grid-template-columns:115px 70px 1.2fr 1.2fr 1fr auto;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:13px;background:#f8fcff;font-size:13px}
-.admin-row .muted{color:var(--muted);font-size:12px}
-.admin-actions{display:flex;gap:6px}
+.admin-toolbar{display:flex;align-items:center;gap:10px;padding-bottom:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.admin-count{margin-right:auto;color:var(--muted);white-space:nowrap}
+.admin-count b{color:var(--text)}
+.admin-search{min-width:260px;flex:1;max-width:380px;background:#f8fcff;border:1px solid var(--line);border-radius:11px;padding:10px 12px;color:var(--text);outline:none}
+.admin-search:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(21,159,227,.08)}
+.admin-export{padding:9px 12px;box-shadow:none;white-space:nowrap}
+.primary-small{background:var(--accent);border-radius:10px;padding:9px 12px;font-weight:700;color:#fff;white-space:nowrap}
+.admin-table-wrap{margin-top:16px;border:1px solid var(--line);border-radius:14px;overflow-x:auto;background:#fff}
+.admin-table{width:100%;min-width:940px;border-collapse:collapse;font-size:13px}
+.admin-table th{background:#eef8fd;color:#47778f;font-size:11px;text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:12px 13px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1}
+.admin-table td{padding:12px 13px;border-bottom:1px solid #e8f1f6;vertical-align:middle;color:#244c63}
+.admin-table tbody tr:hover{background:#f7fcff}
+.admin-table tbody tr:last-child td{border-bottom:0}
+.admin-table a{color:#177faf;text-decoration:none}
+.admin-table a:hover{text-decoration:underline}
+.admin-actions{display:flex;gap:6px;white-space:nowrap}
 .admin-actions button{border:1px solid var(--line);background:#fff;color:#39708c;border-radius:8px;padding:7px 9px}
 .admin-actions .danger{color:#d75050}
+.admin-empty{text-align:center;color:var(--muted);padding:28px 16px;margin:0}
 @media(max-width:800px){
   .brand-logo{height:46px;max-width:250px}
   .date-tabs{grid-template-columns:1fr}
   .date-tab{text-align:center}
   .slots{grid-template-columns:repeat(4,1fr)}
-  .admin-row{grid-template-columns:1fr 1fr}
-  .admin-row .wide{grid-column:1/-1}
-  .admin-actions{justify-content:flex-end}
+  .admin-search{max-width:none;flex-basis:100%;order:2}
+  .admin-count{flex:1}
 }
 @media(max-width:540px){
   .topbar{height:auto;padding-top:16px;padding-bottom:16px;gap:12px;flex-wrap:wrap}
@@ -95,5 +103,8 @@ dialog::backdrop{background:rgba(20,70,94,.28);backdrop-filter:blur(5px)}
   .full{grid-column:auto}
   footer{display:block}
   footer>span{display:block;margin-top:8px}
-  .admin-toolbar{flex-wrap:wrap}
+  dialog{padding:18px}
+  .admin-toolbar{align-items:stretch}
+  .admin-search{min-width:100%;width:100%}
+  .admin-export,.primary-small{flex:1}
 }
