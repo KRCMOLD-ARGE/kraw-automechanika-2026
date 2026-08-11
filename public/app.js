@@ -1,25 +1,50 @@
-let config, selectedDate, selectedTime, holdToken = localStorage.getItem("kraw_hold_token") || "";
+const SUPABASE_URL = "https://zclcywdtyuzjhjilrphs.supabase.co";
+const SUPABASE_KEY = "sb_publishable_7a3GuQd3MQqjCmzrqg4ZUQ_vdd7Z-71";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const config = {
+  dates: ["2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-12"],
+  times: ["10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30"]
+};
+
+let selectedDate = config.dates[0];
+let selectedTime = null;
+let holdToken = localStorage.getItem("kraw_hold_token") || "";
+let adminToken = sessionStorage.getItem("kraw_admin_token") || "";
+let adminBookings = [];
 const $ = s => document.querySelector(s);
 
 const fmtDate = d => new Intl.DateTimeFormat("tr-TR",{weekday:"short",day:"numeric",month:"short"}).format(new Date(d+"T12:00:00"));
 const longDate = d => new Intl.DateTimeFormat("tr-TR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(new Date(d+"T12:00:00"));
 
-async function api(url, options={}) {
-  options.headers = { "Content-Type":"application/json", ...(options.headers||{}) };
-  if (holdToken) options.headers["X-Hold-Token"] = holdToken;
-  const r = await fetch(url, options);
-  const data = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(data.error || "İşlem başarısız.");
+function friendlyError(error){
+  const raw = String(error?.message || error || "İşlem başarısız.");
+  const map = {
+    SLOT_BOOKED:"Bu saat dolu. Lütfen başka bir saat seçin.",
+    SLOT_HELD:"Bu saat şu anda başka bir ziyaretçi tarafından seçildi.",
+    HOLD_EXPIRED:"Saat seçiminizin 5 dakikalık süresi doldu. Lütfen yeniden seçin.",
+    INVALID_SLOT:"Geçersiz randevu saati.",
+    INVALID_NAME:"Lütfen geçerli bir ad soyad girin.",
+    INVALID_COMPANY:"Lütfen firma adını girin.",
+    INVALID_EMAIL:"Lütfen geçerli bir e-posta adresi girin.",
+    INVALID_PHONE:"Lütfen geçerli bir telefon numarası girin.",
+    UNAUTHORIZED:"Admin oturumunuz sona erdi. Lütfen tekrar giriş yapın."
+  };
+  for(const [key,value] of Object.entries(map)) if(raw.includes(key)) return value;
+  return raw;
+}
+
+async function rpc(name, params={}){
+  const {data,error} = await db.rpc(name,params);
+  if(error) throw new Error(friendlyError(error));
   return data;
 }
 
-async function init(){
-  config = await api("/api/config");
-  selectedDate = config.dates[0];
-  renderDates();
-  await refreshSlots();
-  setInterval(refreshSlots, 15000);
+function endTime(t){
+  let [h,m]=t.split(":").map(Number); m+=30; if(m>=60){h++;m-=60}
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
 }
+
 function renderDates(){
   $("#dateTabs").innerHTML = config.dates.map((d,i)=>`
     <button class="date-tab ${d===selectedDate?"active":""}" data-date="${d}">
@@ -28,103 +53,147 @@ function renderDates(){
     </button>`).join("");
   document.querySelectorAll(".date-tab").forEach(b=>b.onclick=async()=>{
     if(selectedTime) await releaseHold();
-    selectedDate=b.dataset.date; selectedTime=null; $("#formCard").classList.add("hidden");
-    renderDates(); await refreshSlots();
+    selectedDate=b.dataset.date;
+    selectedTime=null;
+    $("#formCard").classList.add("hidden");
+    renderDates();
+    await refreshSlots();
   });
 }
+
 async function refreshSlots(){
-  const data = await api("/api/slots");
-  const booked = new Set(data.bookings.map(x=>`${x.date}|${x.time}`));
-  const holds = new Map(data.holds.map(x=>[`${x.date}|${x.time}`,x]));
-  $("#slots").innerHTML = config.times.map(t=>{
-    const key=`${selectedDate}|${t}`, isBooked=booked.has(key), h=holds.get(key), busy=isBooked || (h && !h.mine);
-    return `<button class="slot ${h?.mine?"mine":""}" data-time="${t}" ${busy?"disabled":""}>${t}</button>`;
-  }).join("");
-  document.querySelectorAll(".slot:not(:disabled)").forEach(b=>b.onclick=()=>chooseSlot(b.dataset.time));
+  try{
+    const rows = await rpc("kraw_get_slot_status",{p_hold_token:holdToken || null});
+    const status = new Map((rows||[]).map(x=>[`${x.day}|${x.slot_time}`,x]));
+    $("#slots").innerHTML = config.times.map(t=>{
+      const s=status.get(`${selectedDate}|${t}`);
+      const busy=s && (s.slot_status==="booked" || (s.slot_status==="held" && !s.mine));
+      return `<button class="slot ${s?.mine?"mine":""}" data-time="${t}" ${busy?"disabled":""}>${t}</button>`;
+    }).join("");
+    document.querySelectorAll(".slot:not(:disabled)").forEach(b=>b.onclick=()=>chooseSlot(b.dataset.time));
+  }catch(err){ console.error(err); }
 }
+
 async function chooseSlot(time){
   if(selectedTime && selectedTime!==time) await releaseHold();
   try{
-    const r=await api("/api/holds",{method:"POST",body:JSON.stringify({date:selectedDate,time})});
-    holdToken=r.token; localStorage.setItem("kraw_hold_token",holdToken); selectedTime=time;
+    const result = await rpc("kraw_claim_slot",{p_day:selectedDate,p_time:time});
+    const hold = Array.isArray(result) ? result[0] : result;
+    holdToken = hold.hold_token;
+    localStorage.setItem("kraw_hold_token",holdToken);
+    selectedTime=time;
     $("#selectedSummary").textContent=`${longDate(selectedDate)} · ${time}–${endTime(time)}`;
     $("#formCard").classList.remove("hidden");
     $("#formCard").scrollIntoView({behavior:"smooth",block:"start"});
     await refreshSlots();
-  }catch(e){ alert(e.message); await refreshSlots(); }
+  }catch(err){ alert(friendlyError(err)); await refreshSlots(); }
 }
-function endTime(t){
-  let [h,m]=t.split(":").map(Number); m+=30;if(m>=60){h++;m-=60}return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
-}
+
 async function releaseHold(){
   if(!selectedDate || !selectedTime || !holdToken) return;
-  try{await api("/api/holds",{method:"DELETE",body:JSON.stringify({date:selectedDate,time:selectedTime})})}catch{}
-  selectedTime=null; holdToken=""; localStorage.removeItem("kraw_hold_token");
+  try{await rpc("kraw_release_slot",{p_day:selectedDate,p_time:selectedTime,p_hold_token:holdToken});}catch{}
+  selectedTime=null;
+  holdToken="";
+  localStorage.removeItem("kraw_hold_token");
 }
-$("#cancelSelection").onclick=async()=>{await releaseHold();$("#formCard").classList.add("hidden");await refreshSlots()}
+
+$("#cancelSelection").onclick=async()=>{
+  await releaseHold();
+  $("#formCard").classList.add("hidden");
+  await refreshSlots();
+};
+
 $("#bookingForm").onsubmit=async e=>{
   e.preventDefault();
-  const btn=e.submitter;btn.disabled=true;
-  const previous = btn.innerHTML;
-  btn.innerHTML = 'Kaydediliyor <span>…</span>';
+  if(!selectedTime || !holdToken) return alert("Lütfen önce bir saat seçin.");
+  const btn=e.submitter, previous=btn.innerHTML;
+  btn.disabled=true;
+  btn.innerHTML='Kaydediliyor <span>…</span>';
   const f=Object.fromEntries(new FormData(e.target).entries());
   try{
-    const result = await api("/api/bookings",{method:"POST",body:JSON.stringify({...f,date:selectedDate,time:selectedTime})});
-    localStorage.removeItem("kraw_hold_token"); holdToken="";
-    $("#formCard").classList.add("hidden"); $("#successCard").classList.remove("hidden");
-    const emailMessage = result.emailSent
-      ? "Randevu bilgileriniz e-posta adresinize gönderildi."
-      : "Randevu oluşturuldu. E-posta gönderimi yapılamadıysa SMTP ayarları kontrol edilmelidir.";
-    $("#successText").textContent=`${longDate(selectedDate)}, ${selectedTime}–${endTime(selectedTime)} için görüşmenizi ayırdık. ${emailMessage}`;
+    const bookingId = await rpc("kraw_create_booking",{
+      p_hold_token:holdToken,p_name:f.name,p_company:f.company,p_email:f.email,p_phone:f.phone,p_day:selectedDate,p_time:selectedTime
+    });
+    localStorage.removeItem("kraw_hold_token");
+    holdToken="";
+    let emailSent=false;
+    try{
+      const {data,error}=await db.functions.invoke("send-booking-confirmation",{body:{booking_id:bookingId}});
+      emailSent=!error && data?.sent===true;
+    }catch{}
+    $("#formCard").classList.add("hidden");
+    $("#successCard").classList.remove("hidden");
+    $("#successText").textContent=`${longDate(selectedDate)}, ${selectedTime}–${endTime(selectedTime)} için görüşmenizi ayırdık.${emailSent?" Randevu bilgileriniz e-posta adresinize gönderildi.":" Rezervasyonunuz sisteme kaydedildi."}`;
+    e.target.reset();
     await refreshSlots();
   }catch(err){
-    alert(err.message);
+    alert(friendlyError(err));
     btn.disabled=false;
-    btn.innerHTML = previous;
+    btn.innerHTML=previous;
+    await refreshSlots();
   }
 };
 
 const adminDialog=$("#adminDialog"), editDialog=$("#editDialog");
-$("#adminBtn").onclick=async()=>{adminDialog.showModal();await checkAdmin()}
+$("#adminBtn").onclick=async()=>{adminDialog.showModal();await checkAdmin();};
 $("#closeAdmin").onclick=()=>adminDialog.close();
 $("#closeEdit").onclick=()=>editDialog.close();
 
 async function checkAdmin(){
-  const s=await api("/api/admin/session");
-  $("#adminLogin").classList.toggle("hidden",s.authenticated);
-  $("#adminPanel").classList.toggle("hidden",!s.authenticated);
-  if(s.authenticated) await loadAdmin();
+  let authenticated=false;
+  if(adminToken){
+    try{authenticated=await rpc("kraw_admin_session_valid",{p_session_token:adminToken});}catch{}
+  }
+  if(!authenticated){adminToken="";sessionStorage.removeItem("kraw_admin_token");}
+  $("#adminLogin").classList.toggle("hidden",authenticated);
+  $("#adminPanel").classList.toggle("hidden",!authenticated);
+  if(authenticated) await loadAdmin();
 }
-$("#loginForm").onsubmit=async e=>{
-  e.preventDefault(); $("#loginError").textContent="";
-  try{
-    await api("/api/admin/login",{method:"POST",body:JSON.stringify(Object.fromEntries(new FormData(e.target).entries()))});
-    e.target.reset(); await checkAdmin();
-  }catch(err){ $("#loginError").textContent=err.message }
-};
-$("#logoutBtn").onclick=async()=>{await api("/api/admin/logout",{method:"POST"});await checkAdmin()};
 
-let adminBookings=[];
+$("#loginForm").onsubmit=async e=>{
+  e.preventDefault();
+  $("#loginError").textContent="";
+  const f=Object.fromEntries(new FormData(e.target).entries());
+  try{
+    const result=await rpc("kraw_admin_login",{p_username:f.username,p_password:f.password});
+    const row=Array.isArray(result)?result[0]:result;
+    if(!row?.session_token){
+      $("#loginError").textContent=row?.error_code==="LOCKED"?"Çok fazla hatalı deneme. 15 dakika sonra tekrar deneyin.":"Kullanıcı adı veya şifre hatalı.";
+      return;
+    }
+    adminToken=row.session_token;
+    sessionStorage.setItem("kraw_admin_token",adminToken);
+    e.target.reset();
+    await checkAdmin();
+  }catch(err){$("#loginError").textContent=friendlyError(err);}
+};
+
+$("#logoutBtn").onclick=async()=>{
+  try{if(adminToken) await rpc("kraw_admin_logout",{p_session_token:adminToken});}catch{}
+  adminToken="";sessionStorage.removeItem("kraw_admin_token");await checkAdmin();
+};
+
 async function loadAdmin(){
-  const d=await api("/api/admin/bookings");
-  adminBookings=d.bookings;
-  $("#bookingCount").textContent=adminBookings.length;
-  $("#adminList").innerHTML=adminBookings.length?adminBookings.map(b=>`
-    <div class="admin-row">
-      <div><b>${fmtDate(b.date)}</b></div>
-      <div><b>${b.time}</b></div>
-      <div class="wide"><b>${esc(b.name)}</b><div class="muted">${esc(b.company)}</div></div>
-      <div class="wide">${esc(b.email || "—")}</div>
-      <div>${esc(b.phone || "—")}</div>
-      <div class="admin-actions">
-        <button data-edit="${b.id}">Düzenle</button>
-        <button class="danger" data-del="${b.id}">Sil</button>
-      </div>
-    </div>`).join(""):`<p class="muted">Henüz randevu yok.</p>`;
-  document.querySelectorAll("[data-edit]").forEach(x=>x.onclick=()=>openEdit(adminBookings.find(b=>b.id===x.dataset.edit)));
-  document.querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>deleteBooking(x.dataset.del));
+  try{
+    const rows=await rpc("kraw_admin_list_bookings",{p_session_token:adminToken});
+    adminBookings=(rows||[]).map(b=>({...b,date:b.day,time:b.slot_time}));
+    $("#bookingCount").textContent=adminBookings.length;
+    $("#adminList").innerHTML=adminBookings.length?adminBookings.map(b=>`
+      <div class="admin-row">
+        <div><b>${fmtDate(b.date)}</b></div><div><b>${b.time}</b></div>
+        <div class="wide"><b>${esc(b.name)}</b><div class="muted">${esc(b.company)}</div></div>
+        <div class="wide">${esc(b.email||"—")}</div><div>${esc(b.phone||"—")}</div>
+        <div class="admin-actions"><button data-edit="${b.id}">Düzenle</button><button class="danger" data-del="${b.id}">Sil</button></div>
+      </div>`).join(""):`<p class="muted">Henüz randevu yok.</p>`;
+    document.querySelectorAll("[data-edit]").forEach(x=>x.onclick=()=>openEdit(adminBookings.find(b=>b.id===x.dataset.edit)));
+    document.querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>deleteBooking(x.dataset.del));
+  }catch(err){
+    if(String(err.message).includes("Admin oturumunuz")){adminToken="";sessionStorage.removeItem("kraw_admin_token");await checkAdmin();}
+    else alert(friendlyError(err));
+  }
 }
-function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
 function prepSelects(){
   const f=$("#editForm");
   f.date.innerHTML=config.dates.map(d=>`<option value="${d}">${longDate(d)}</option>`).join("");
@@ -132,9 +201,7 @@ function prepSelects(){
 }
 function openEdit(b=null){
   prepSelects();
-  const f=$("#editForm");
-  f.reset();
-  f.id.value=b?.id||"";
+  const f=$("#editForm");f.reset();f.id.value=b?.id||"";
   $("#editTitle").textContent=b?"Randevuyu Düzenle":"Randevu Ekle";
   if(b) for(const k of ["date","time","name","company","email","phone"]) f[k].value=b[k]||"";
   editDialog.showModal();
@@ -142,15 +209,31 @@ function openEdit(b=null){
 $("#addBooking").onclick=()=>openEdit();
 $("#editForm").onsubmit=async e=>{
   e.preventDefault();
-  const data=Object.fromEntries(new FormData(e.target).entries()),id=data.id;
-  delete data.id;
+  const data=Object.fromEntries(new FormData(e.target).entries()), id=data.id;
   try{
-    await api(id?`/api/admin/bookings/${id}`:"/api/admin/bookings",{method:id?"PUT":"POST",body:JSON.stringify(data)});
-    editDialog.close(); await loadAdmin(); await refreshSlots();
-  }catch(err){alert(err.message)}
+    if(id){
+      await rpc("kraw_admin_update_booking",{p_session_token:adminToken,p_id:id,p_name:data.name,p_company:data.company,p_email:data.email,p_phone:data.phone,p_day:data.date,p_time:data.time});
+    }else{
+      await rpc("kraw_admin_create_booking",{p_session_token:adminToken,p_name:data.name,p_company:data.company,p_email:data.email,p_phone:data.phone,p_day:data.date,p_time:data.time});
+    }
+    editDialog.close();await loadAdmin();await refreshSlots();
+  }catch(err){alert(friendlyError(err));}
 };
 async function deleteBooking(id){
-  if(!confirm("Bu randevuyu silmek istediğinize emin misiniz?"))return;
-  try{await api(`/api/admin/bookings/${id}`,{method:"DELETE"});await loadAdmin();await refreshSlots()}catch(err){alert(err.message)}
+  if(!confirm("Bu randevuyu silmek istediğinize emin misiniz?")) return;
+  try{await rpc("kraw_admin_delete_booking",{p_session_token:adminToken,p_id:id});await loadAdmin();await refreshSlots();}catch(err){alert(friendlyError(err));}
 }
-init().catch(e=>{document.body.innerHTML=`<pre style="color:white;padding:30px">${esc(e.message)}</pre>`});
+
+function subscribeRealtime(){
+  db.channel("kraw-slot-events")
+    .on("postgres_changes",{event:"*",schema:"public",table:"slot_events"},()=>refreshSlots())
+    .subscribe();
+}
+
+async function init(){
+  renderDates();
+  await refreshSlots();
+  subscribeRealtime();
+  setInterval(refreshSlots,30000);
+}
+init().catch(e=>{document.body.innerHTML=`<pre style="padding:30px">${esc(friendlyError(e))}</pre>`;});
