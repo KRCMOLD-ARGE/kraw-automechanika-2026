@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./public/style.css">
+  <link rel="stylesheet" href="./public/style.css?v=20260811-1722">
 </head>
 <body>
   <div class="ambient a1"></div><div class="ambient a2"></div>
@@ -16,10 +16,8 @@
     <a class="brand" href="#" aria-label="KRAW"><img src="./public/kraw-logo.png" alt="KRAW logo" class="brand-logo"></a>
     <button id="adminBtn" class="ghost-btn">Admin Panel</button>
   </header>
-
   <main>
     <section class="hero hero-banner"><img src="./public/automechanika-banner.png" alt="Automechanika Frankfurt 8-12 September 2026" class="hero-image"></section>
-
     <section class="booking-card">
       <div class="section-head">
         <div><div class="step-label">01 / DATE</div><h2>Select your meeting time</h2></div>
@@ -29,7 +27,6 @@
       <div id="slots" class="slots"></div>
       <p class="slot-note">Your selected time will be held for 5 minutes while you complete the form.</p>
     </section>
-
     <section id="formCard" class="booking-card hidden">
       <div class="section-head">
         <div><div class="step-label">02 / DETAILS</div><h2>Complete your reservation</h2></div>
@@ -45,7 +42,6 @@
       </form>
       <p class="slot-note">Your appointment will be securely saved in our reservation system.</p>
     </section>
-
     <section id="successCard" class="booking-card success hidden">
       <div class="success-icon">✓</div>
       <h2>Your appointment has been confirmed.</h2>
@@ -53,12 +49,10 @@
       <button class="ghost-btn" onclick="location.reload()">Book another appointment</button>
     </section>
   </main>
-
   <footer>
     <div class="footer-brand"><img src="./public/kraw-logo.png" alt="KRAW logo" class="footer-logo"><span>Karaca Automotive Safety</span></div>
     <span>Automechanika Frankfurt 2026</span>
   </footer>
-
   <dialog id="adminDialog">
     <div class="dialog-head"><div><div class="step-label">KRAW</div><h2>Admin Panel</h2></div><button class="icon-btn" id="closeAdmin">×</button></div>
     <div id="adminLogin">
@@ -69,7 +63,6 @@
       </form>
       <p id="loginError" class="error"></p>
     </div>
-
     <div id="adminPanel" class="hidden">
       <div class="admin-toolbar">
         <div class="admin-count"><b id="bookingCount">0</b> appointments</div>
@@ -87,7 +80,6 @@
       </div>
     </div>
   </dialog>
-
   <dialog id="editDialog">
     <div class="dialog-head"><div><div class="step-label">ADMIN</div><h2 id="editTitle">Appointment</h2></div><button class="icon-btn" id="closeEdit">×</button></div>
     <form id="editForm" class="form-grid">
@@ -101,8 +93,7 @@
       <button class="primary-btn full" type="submit">Save</button>
     </form>
   </dialog>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./public/app.js"></script>
+  <script src="./public/app.js?v=20260811-1722"></script>
 </body>
 </html>
