@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./public/style.css?v=20260812-1430">
+  <link rel="stylesheet" href="./public/admin-enhancements.css?v=20260812-1430">
 </head>
 <body>
   <div class="ambient a1"></div><div class="ambient a2"></div>
@@ -70,13 +71,11 @@
         <div class="summary-card"><span>Booked Slots</span><b id="summaryBooked">0 / 80</b></div>
         <div class="summary-card"><span>Occupancy</span><b id="summaryOccupancy">0%</b></div>
       </div>
-
       <div class="admin-filterbar">
         <button id="filterAll" class="filter-btn active" data-admin-day="all">All Days</button>
         <button id="filterToday" class="filter-btn">Today</button>
         <div id="adminDayFilters" class="admin-day-filters"></div>
       </div>
-
       <div class="admin-toolbar">
         <div class="admin-count"><b id="bookingCount">0</b> shown</div>
         <input id="adminSearch" class="admin-search" type="search" placeholder="Search name, company, email or phone…" aria-label="Search appointments">
