@@ -40,6 +40,31 @@ async function rpc(name, params={}){
   return data;
 }
 
+async function sendBookingConfirmation(createdRow){
+  if(!createdRow?.booking_id || !createdRow?.email_token) return false;
+  const controller = new AbortController();
+  const timeout = setTimeout(()=>controller.abort(),10000);
+  try{
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-booking-confirmation`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY},
+      body:JSON.stringify({booking_id:createdRow.booking_id,email_token:createdRow.email_token}),
+      signal:controller.signal
+    });
+    const payload = await response.json().catch(()=>({}));
+    if(!response.ok || payload?.sent!==true){
+      console.warn("Confirmation email could not be sent",response.status,payload);
+      return false;
+    }
+    return true;
+  }catch(err){
+    console.warn("Confirmation email request failed",err);
+    return false;
+  }finally{
+    clearTimeout(timeout);
+  }
+}
+
 function endTime(t){
   let [h,m]=t.split(":").map(Number); m+=30; if(m>=60){h++;m-=60}
   return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
@@ -109,8 +134,16 @@ $("#bookingForm").onsubmit=async e=>{
     const createdRow = Array.isArray(created) ? created[0] : created;
     if(!createdRow?.booking_id) throw new Error("The appointment could not be created.");
     localStorage.removeItem("kraw_hold_token"); holdToken="";
+
+    const emailSent = await sendBookingConfirmation(createdRow);
+    const bookedDate = selectedDate;
+    const bookedTime = selectedTime;
+
     $("#formCard").classList.add("hidden"); $("#successCard").classList.remove("hidden");
-    $("#successText").textContent=`Your meeting is reserved for ${longDate(selectedDate)}, ${selectedTime}–${endTime(selectedTime)} (Frankfurt local time). Your appointment has been saved successfully.`;
+    const emailMessage = emailSent
+      ? ` A confirmation email has been sent to ${f.email}.`
+      : " Your appointment is confirmed. If the confirmation email does not arrive, your reservation is still valid.";
+    $("#successText").textContent=`Your meeting is reserved for ${longDate(bookedDate)}, ${bookedTime}–${endTime(bookedTime)} (Frankfurt local time).${emailMessage}`;
     e.target.reset(); await refreshSlots();
   }catch(err){
     alert(friendlyError(err)); btn.disabled=false; btn.innerHTML=previous; await refreshSlots();
