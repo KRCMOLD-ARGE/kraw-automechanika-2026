@@ -1,5 +1,6 @@
-// KRAW admin dashboard enhancements: day filters, occupancy summary and print view.
+// KRAW admin dashboard enhancements: day filters, occupancy summary, print view and bulk actions.
 let adminDayFilter = "all";
+const selectedAdminBookings = new Set();
 
 function getAdminFilteredBookings() {
   const term = ($("#adminSearch")?.value || "").trim().toLocaleLowerCase("en-GB");
@@ -9,6 +10,75 @@ function getAdminFilteredBookings() {
       .join(" ").toLocaleLowerCase("en-GB").includes(term);
     return dayMatch && textMatch;
   });
+}
+
+function ensureBulkControls() {
+  const toolbar = document.querySelector(".admin-toolbar");
+  if (toolbar && !$("#deleteSelected")) {
+    const btn = document.createElement("button");
+    btn.id = "deleteSelected";
+    btn.className = "ghost-btn admin-export bulk-delete-btn";
+    btn.type = "button";
+    btn.disabled = true;
+    btn.textContent = "Delete Selected";
+    const addBtn = $("#addBooking");
+    toolbar.insertBefore(btn, addBtn || null);
+    btn.onclick = bulkDeleteBookings;
+  }
+
+  const headRow = document.querySelector(".admin-table thead tr");
+  if (headRow && !$("#selectAllBookings")) {
+    const th = document.createElement("th");
+    th.className = "admin-select-col";
+    th.innerHTML = '<input id="selectAllBookings" class="admin-check" type="checkbox" aria-label="Select all visible appointments">';
+    headRow.insertBefore(th, headRow.firstChild);
+    $("#selectAllBookings").onchange = e => {
+      const visible = getAdminFilteredBookings();
+      if (e.target.checked) visible.forEach(b => selectedAdminBookings.add(String(b.id)));
+      else visible.forEach(b => selectedAdminBookings.delete(String(b.id)));
+      renderAdminRows();
+    };
+  }
+}
+
+function updateBulkControls(filtered) {
+  const btn = $("#deleteSelected");
+  const count = selectedAdminBookings.size;
+  if (btn) {
+    btn.disabled = count === 0;
+    btn.textContent = count ? `Delete Selected (${count})` : "Delete Selected";
+  }
+  const all = $("#selectAllBookings");
+  if (all) {
+    const ids = filtered.map(b => String(b.id));
+    const selectedVisible = ids.filter(id => selectedAdminBookings.has(id)).length;
+    all.checked = ids.length > 0 && selectedVisible === ids.length;
+    all.indeterminate = selectedVisible > 0 && selectedVisible < ids.length;
+  }
+}
+
+async function bulkDeleteBookings() {
+  const ids = [...selectedAdminBookings];
+  if (!ids.length) return;
+  if (!confirm(`Are you sure you want to delete ${ids.length} selected appointment${ids.length === 1 ? "" : "s"}?`)) return;
+
+  const btn = $("#deleteSelected");
+  if (btn) { btn.disabled = true; btn.textContent = "Deleting…"; }
+  let deleted = 0;
+  try {
+    for (const id of ids) {
+      await rpc("kraw_admin_delete_booking", {p_session_token:adminToken, p_id:id});
+      deleted++;
+    }
+    selectedAdminBookings.clear();
+    await loadAdmin();
+    await refreshSlots();
+  } catch (err) {
+    alert(`${deleted} appointment${deleted === 1 ? "" : "s"} deleted before an error occurred. ${friendlyError(err)}`);
+    selectedAdminBookings.clear();
+    await loadAdmin();
+    await refreshSlots();
+  }
 }
 
 function renderAdminDayFilters() {
@@ -51,8 +121,12 @@ function renderAdminSummary(filtered) {
 }
 
 window.renderAdminRows = function () {
+  ensureBulkControls();
   const filtered = getAdminFilteredBookings();
   renderAdminSummary(filtered);
+
+  const existingIds = new Set(adminBookings.map(b => String(b.id)));
+  [...selectedAdminBookings].forEach(id => { if (!existingIds.has(id)) selectedAdminBookings.delete(id); });
 
   const empty = $("#adminEmpty");
   if (empty) empty.classList.toggle("hidden", filtered.length > 0);
@@ -60,7 +134,8 @@ window.renderAdminRows = function () {
   if (!list) return;
 
   list.innerHTML = filtered.map(b => `
-    <tr>
+    <tr class="${selectedAdminBookings.has(String(b.id)) ? "selected-row" : ""}">
+      <td class="admin-select-col"><input class="admin-check row-booking-check" type="checkbox" data-select-booking="${b.id}" aria-label="Select ${esc(b.name)}" ${selectedAdminBookings.has(String(b.id)) ? "checked" : ""}></td>
       <td><b>${fmtDate(b.date)}</b></td>
       <td><b>${esc(b.time)}</b></td>
       <td>${esc(b.name)}</td>
@@ -70,8 +145,14 @@ window.renderAdminRows = function () {
       <td><div class="admin-actions"><button data-edit="${b.id}">Edit</button><button class="danger" data-del="${b.id}">Delete</button></div></td>
     </tr>`).join("");
 
-  document.querySelectorAll("[data-edit]").forEach(x => x.onclick = () => openEdit(adminBookings.find(b => b.id === x.dataset.edit)));
+  document.querySelectorAll("[data-select-booking]").forEach(x => x.onchange = () => {
+    const id = String(x.dataset.selectBooking);
+    if (x.checked) selectedAdminBookings.add(id); else selectedAdminBookings.delete(id);
+    renderAdminRows();
+  });
+  document.querySelectorAll("[data-edit]").forEach(x => x.onclick = () => openEdit(adminBookings.find(b => String(b.id) === String(x.dataset.edit))));
   document.querySelectorAll("[data-del]").forEach(x => x.onclick = () => deleteBooking(x.dataset.del));
+  updateBulkControls(filtered);
 };
 
 const originalLoadAdmin = window.loadAdmin;
@@ -143,5 +224,17 @@ if (printButton) printButton.onclick = () => {
   popup.document.close();
 };
 
+// Keep an open admin panel synchronized when slot events arrive from another browser/device.
+db.channel("kraw-admin-live-sync").on("postgres_changes", {event:"*",schema:"public",table:"slot_events"}, async () => {
+  await refreshSlots();
+  if (adminToken && $("#adminDialog")?.open && !$("#adminPanel")?.classList.contains("hidden")) {
+    try { await loadAdmin(); } catch {}
+  }
+}).subscribe();
+
+window.addEventListener("focus", () => refreshSlots());
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshSlots(); });
+
+ensureBulkControls();
 renderAdminDayFilters();
 syncAdminFilterButtons();
