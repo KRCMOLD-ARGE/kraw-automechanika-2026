@@ -3,15 +3,15 @@
   --line:#d7eaf5;--accent:#159fe3;--accent2:#0c8fd1;--ok:#2bb673;--soft:#e9f6fd;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:linear-gradient(180deg,#ffffff 0%,#f4fbff 100%);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:linear-gradient(180deg,#ffffff 0%,#f4fbff 100%);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
 button,input,textarea,select{font:inherit}
-button{cursor:pointer}
+button{cursor:pointer;touch-action:manipulation}
 .ambient{position:fixed;border-radius:50%;filter:blur(130px);opacity:.18;pointer-events:none;z-index:-1}
 .a1{width:430px;height:430px;background:#35b8f4;top:-190px;right:3%}
 .a2{width:320px;height:320px;background:#bcecff;top:54%;left:-130px}
 .topbar{height:90px;max-width:1180px;margin:auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;text-decoration:none}
+.brand{display:flex;align-items:center;text-decoration:none;min-width:0}
 .brand-logo{display:block;height:58px;width:auto;max-width:340px;object-fit:contain}
 .ghost-btn,.primary-small,.text-btn,.icon-btn{border:0;color:var(--text)}
 .ghost-btn{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 15px;box-shadow:0 5px 18px rgba(33,119,163,.07)}
@@ -30,26 +30,26 @@ main{max-width:1180px;margin:auto;padding:24px 24px 80px}
 .busy{background:#a8bfcc}
 .step-label{font-size:12px;font-weight:700;letter-spacing:.13em;color:var(--accent);text-transform:uppercase}
 .date-tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:28px 0 0}
-.date-tab{background:#f8fcff;color:var(--muted);border:1px solid var(--line);border-radius:15px;padding:15px 10px;text-align:left;transition:.18s}
+.date-tab{background:#f8fcff;color:var(--muted);border:1px solid var(--line);border-radius:15px;padding:15px 10px;text-align:left;transition:.18s;min-height:72px;touch-action:manipulation}
 .date-tab:hover{border-color:#9bd7f2;background:#f2faff}
 .date-tab b,.date-tab span{display:block}
 .date-tab b{color:var(--text);font-size:18px;margin-top:4px}
 .date-tab.active{border-color:var(--accent);background:linear-gradient(180deg,#eef9ff,#e2f5ff);box-shadow:0 8px 20px rgba(21,159,227,.09)}
 .slots{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:20px;padding-top:20px;border-top:1px solid #d7eaf5}
-.slot{border:1px solid #9adbb8;background:#eefaf3;color:#17633a;border-radius:12px;padding:13px 8px;transition:.18s;font-weight:600}
+.slot{border:1px solid #9adbb8;background:#eefaf3;color:#17633a;border-radius:12px;padding:13px 8px;transition:.18s;font-weight:600;min-height:48px;touch-action:manipulation}
 .slot:hover:not(:disabled){border-color:#36ad70;background:#ddf6e8;transform:translateY(-1px);box-shadow:0 6px 16px rgba(43,182,115,.12)}
 .slot:disabled{color:#9fb0ba;background:#f1f5f7;text-decoration:line-through;cursor:not-allowed;border-color:#e3edf2;font-weight:400}
 .slot.mine{border-color:var(--accent);background:#e8f7ff;color:#087db9;font-weight:700;box-shadow:0 0 0 2px rgba(21,159,227,.08)}
-.slot-note{font-size:12px;color:var(--muted);margin:15px 0 0}
+.slot-note{font-size:12px;color:var(--muted);margin:15px 0 0;line-height:1.5}
 .hidden{display:none!important}
-.selected-summary{margin:22px 0;padding:16px 18px;border:1px solid #bde4f7;background:#eef9ff;border-radius:14px;color:#0d638c;font-weight:600}
+.selected-summary{margin:22px 0;padding:16px 18px;border:1px solid #bde4f7;background:#eef9ff;border-radius:14px;color:#0d638c;font-weight:600;line-height:1.45}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .form-grid.single{grid-template-columns:1fr;max-width:440px}
-.form-grid label{font-size:12px;color:var(--muted);font-weight:600}
-.form-grid input,.form-grid textarea,.form-grid select{width:100%;margin-top:7px;background:#fbfdff;border:1px solid var(--line);border-radius:12px;padding:13px;color:var(--text);outline:none}
+.form-grid label{font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+.form-grid input,.form-grid textarea,.form-grid select{width:100%;margin-top:7px;background:#fbfdff;border:1px solid var(--line);border-radius:12px;padding:13px;color:var(--text);outline:none;min-height:48px}
 .form-grid input:focus,.form-grid textarea:focus,.form-grid select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(21,159,227,.08)}
 .full{grid-column:1/-1}
-.primary-btn{border:0;border-radius:13px;background:linear-gradient(135deg,var(--accent),#0b8ccd);color:white;font-weight:700;padding:14px 17px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 10px 25px rgba(21,159,227,.2)}
+.primary-btn{border:0;border-radius:13px;background:linear-gradient(135deg,var(--accent),#0b8ccd);color:white;font-weight:700;padding:14px 17px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 10px 25px rgba(21,159,227,.2);min-height:50px;touch-action:manipulation}
 .primary-btn:hover,.primary-small:hover{background:linear-gradient(135deg,#0c93d4,#087ebb)}
 .text-btn{background:transparent;color:#4e7890;padding:7px}
 .success{text-align:center;padding:45px}
@@ -84,27 +84,53 @@ dialog::backdrop{background:rgba(20,70,94,.28);backdrop-filter:blur(5px)}
 .admin-actions .danger{color:#d75050}
 .admin-empty{text-align:center;color:var(--muted);padding:28px 16px;margin:0}
 @media(max-width:800px){
+  .topbar{padding-left:18px;padding-right:18px}
+  main{padding:16px 18px 60px}
   .brand-logo{height:46px;max-width:250px}
-  .date-tabs{grid-template-columns:1fr}
+  .date-tabs{grid-template-columns:repeat(2,1fr)}
+  .date-tab:last-child{grid-column:1/-1}
   .date-tab{text-align:center}
   .slots{grid-template-columns:repeat(4,1fr)}
   .admin-search{max-width:none;flex-basis:100%;order:2}
   .admin-count{flex:1}
 }
 @media(max-width:540px){
-  .topbar{height:auto;padding-top:16px;padding-bottom:16px;gap:12px;flex-wrap:wrap}
-  .brand-logo{height:38px;max-width:200px}
-  .hero-image{border-radius:16px}
-  .booking-card{padding:20px;border-radius:18px}
+  .topbar{height:auto;padding:12px 14px;gap:10px;flex-wrap:nowrap}
+  .brand-logo{height:34px;max-width:170px}
+  .topbar .ghost-btn{padding:9px 11px;font-size:12px;white-space:nowrap}
+  main{padding:10px 12px 48px}
+  .hero{padding:6px 0 18px}
+  .hero-image{border-radius:14px}
+  .booking-card{padding:18px 14px;border-radius:18px;margin-bottom:16px}
   .section-head{display:block}
-  .legend{margin-top:12px}
-  .slots{grid-template-columns:repeat(3,1fr);margin-top:16px;padding-top:16px}
-  .form-grid{grid-template-columns:1fr}
+  .section-head h2{font-size:23px;line-height:1.15}
+  .legend{margin-top:12px;padding-top:0;justify-content:flex-start}
+  .date-tabs{grid-template-columns:1fr 1fr;gap:7px;margin-top:22px}
+  .date-tab{padding:12px 8px;min-height:66px;text-align:center}
+  .date-tab:last-child{grid-column:1/-1}
+  .date-tab b{font-size:16px}
+  .date-tab span{font-size:13px}
+  .slots{grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px;padding-top:16px}
+  .slot{padding:12px 5px;min-height:48px;font-size:15px}
+  .form-grid{grid-template-columns:1fr;gap:12px}
+  .form-grid input,.form-grid textarea,.form-grid select{font-size:16px;min-height:50px;padding:14px 12px}
+  .form-grid label{font-size:13px}
   .full{grid-column:auto}
-  footer{display:block}
+  .primary-btn{width:100%;font-size:16px;min-height:52px}
+  .selected-summary{margin:16px 0;padding:14px;font-size:14px}
+  #cancelSelection{padding:9px 0;margin-top:6px}
+  .success{padding:34px 18px}
+  .success h2{font-size:24px}
+  footer{display:block;padding:24px 14px 36px}
   footer>span{display:block;margin-top:8px}
-  dialog{padding:18px}
+  dialog{width:calc(100% - 12px);padding:16px;border-radius:16px}
   .admin-toolbar{align-items:stretch}
-  .admin-search{min-width:100%;width:100%}
+  .admin-search{min-width:100%;width:100%;font-size:16px}
   .admin-export,.primary-small{flex:1}
+}
+@media(max-width:360px){
+  .slots{grid-template-columns:repeat(2,1fr)}
+  .date-tabs{grid-template-columns:1fr}
+  .date-tab:last-child{grid-column:auto}
+  .brand-logo{max-width:145px}
 }
