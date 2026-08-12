@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f6fbff">
   <title>KRAW | Automechanika Frankfurt 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./public/style.css?v=20260811-1722">
+  <link rel="stylesheet" href="./public/style.css?v=20260812-1400">
 </head>
 <body>
   <div class="ambient a1"></div><div class="ambient a2"></div>
@@ -33,11 +33,11 @@
         <button id="cancelSelection" class="text-btn">Change time</button>
       </div>
       <div id="selectedSummary" class="selected-summary"></div>
-      <form id="bookingForm" class="form-grid">
-        <label>Full Name*<input name="name" required placeholder="Your full name"></label>
-        <label>Email*<input name="email" type="email" required placeholder="name@company.com"></label>
-        <label>Phone*<input name="phone" required placeholder="+49 ..."></label>
-        <label>Company*<input name="company" required placeholder="Company name"></label>
+      <form id="bookingForm" class="form-grid" autocomplete="on">
+        <label>Full Name*<input name="name" autocomplete="name" required placeholder="Your full name"></label>
+        <label>Email*<input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="name@company.com"></label>
+        <label>Phone*<input name="phone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="+49 ..."></label>
+        <label>Company*<input name="company" autocomplete="organization" required placeholder="Company name"></label>
         <button class="primary-btn full" type="submit">Confirm Appointment <span>→</span></button>
       </form>
       <p class="slot-note">Your appointment will be securely saved in our reservation system.</p>
@@ -88,7 +88,7 @@
       <label>Time<select name="time"></select></label>
       <label>Full Name<input name="name" required></label>
       <label>Email<input name="email" type="email" required></label>
-      <label>Phone<input name="phone" required></label>
+      <label>Phone<input name="phone" type="tel" inputmode="tel" required></label>
       <label>Company<input name="company" required></label>
       <button class="primary-btn full" type="submit">Save</button>
     </form>
